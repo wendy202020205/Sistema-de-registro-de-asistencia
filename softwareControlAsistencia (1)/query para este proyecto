@@ -1,0 +1,49 @@
+-- Crear la base de datos
+CREATE DATABASE IF NOT EXISTS sistema_asistencia;
+USE sistema_asistencia;
+
+-- Tabla de usuarios
+CREATE TABLE IF NOT EXISTS usuarios (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password VARCHAR(64) NOT NULL,  -- SHA2-256 produce 64 caracteres
+    nombre VARCHAR(100) NOT NULL,
+    rol ENUM('admin', 'usuario') NOT NULL DEFAULT 'usuario',
+    codigo_unico VARCHAR(50) UNIQUE,
+    email VARCHAR(100),
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabla de asistencias
+CREATE TABLE IF NOT EXISTS asistencias (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    usuario_id INT NOT NULL,
+    fecha DATE NOT NULL,
+    hora TIME NOT NULL,
+    tipo ENUM('entrada', 'salida') NOT NULL,
+    metodo ENUM('codigo', 'huella', 'facial') NOT NULL,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+);
+
+-- Tabla de inasistencias
+CREATE TABLE IF NOT EXISTS inasistencias (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    usuario_id INT NOT NULL,
+    fecha DATE NOT NULL,
+    justificada BOOLEAN NOT NULL DEFAULT FALSE,
+    motivo TEXT,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+);
+
+-- Índices para mejorar el rendimiento
+CREATE INDEX idx_asistencias_usuario ON asistencias(usuario_id);
+CREATE INDEX idx_inasistencias_usuario ON inasistencias(usuario_id);
+
+-- Usuario admin inicial (contraseña: admin123)
+INSERT INTO usuarios (username, password, nombre, rol)
+VALUES (
+    'admin',
+    SHA2('admin123', 256),
+    'Administrador Principal',
+    'admin'
+);
